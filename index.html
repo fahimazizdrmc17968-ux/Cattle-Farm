@@ -988,7 +988,7 @@ canvas { max-height: 180px; }
 <script>
 // ===================== CONFIG =====================
 const API_KEY = "GS_API_URL";
-let API_URL = "https://script.google.com/macros/s/AKfycbw0PIeScVCtVJEycwFOvvLEf0JECDjCbqph4jQ4bQewCyvlVa9xjjtUOCmp_ZcN3hJs/exec";
+let API_URL = "https://script.google.com/macros/s/AKfycbypXPxLoYGxcjE60p81KLq-wlFiwhyC9rFvysJD5oTREmJ7yPQxIm1xPtMqnFrr3qDD/exec";
 let cattleCache = [];
 let milkChartInst, breedChartInst;
 
@@ -1011,21 +1011,18 @@ function saveApiUrl() {
 }
 
 // ===================== API =====================
-async function apiCall(resource, method = "GET", body = null, params = {}) {
+async function apiCall(action, params = {}) {
   if (!API_URL) {
     toast("Please configure your Google Sheets API URL first.", "error");
     document.getElementById("setup-banner").style.display = "block";
     return null;
   }
   try {
-    const qp = new URLSearchParams({ resource, method, ...params });
+    const qp = new URLSearchParams({ action, ...params });
     const url = `${API_URL}?${qp}`;
-    const opts = { method: body ? "POST" : "GET" };
-    if (body) {
-      opts.body = JSON.stringify(body);
-      opts.headers = { "Content-Type": "application/json" };
+    
     }
-    const res = await fetch(url, opts);
+    const res = await fetch(url);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     return data;
@@ -1140,7 +1137,7 @@ async function loadDashboard() {
 // ===================== CATTLE =====================
 async function loadCattle() {
   document.getElementById("cattle-body").innerHTML = loadingRow(8);
-  const data = await apiCall("cattle");
+  const data = await apiCall("getCattle");
   if (!data) return;
   cattleCache = Array.isArray(data) ? data : [];
   renderCattle(cattleCache);
@@ -1203,7 +1200,7 @@ async function saveCattle() {
     PurchasePrice: document.getElementById("c-pprice").value,
     Notes: document.getElementById("c-notes").value,
   };
-  const res = await apiCall("cattle", "POST", data);
+  const res = await apiCall("addCattle", data);
   if (res?.success) {
     toast("Cattle added successfully!", "success");
     closeModal("cattle-modal");
@@ -1213,14 +1210,14 @@ async function saveCattle() {
 
 async function deleteCattle(id) {
   if (!confirm("Delete this cattle record?")) return;
-  const res = await apiCall("cattle", "DELETE", null, { id });
+  const res = await apiCall("delCattle", { id });
   if (res?.success) { toast("Deleted", "success"); loadCattle(); }
 }
 
 // ===================== HEALTH =====================
 async function loadHealth() {
   document.getElementById("health-body").innerHTML = loadingRow(8);
-  const data = await apiCall("health");
+  const data = await apiCall("getHealth");
   if (!data) return;
   const list = Array.isArray(data) ? data : [];
   renderHealth(list);
@@ -1272,7 +1269,7 @@ async function saveHealth() {
     Cost: document.getElementById("h-cost").value,
     NextDueDate: document.getElementById("h-next").value,
   };
-  const res = await apiCall("health", "POST", data);
+  const res = await apiCall("addHealth", data);
   if (res?.success) {
     toast("Health record saved!", "success");
     closeModal("health-modal");
@@ -1283,7 +1280,7 @@ async function saveHealth() {
 // ===================== FEEDING =====================
 async function loadFeeding() {
   document.getElementById("feeding-body").innerHTML = loadingRow(7);
-  const data = await apiCall("feeding");
+  const data = await apiCall("getFeeding");
   if (!data) return;
   const list = Array.isArray(data) ? data : [];
   const tbody = document.getElementById("feeding-body");
@@ -1319,14 +1316,14 @@ async function saveFeeding() {
     Cost: document.getElementById("f-cost").value,
     Notes: document.getElementById("f-notes").value,
   };
-  const res = await apiCall("feeding", "POST", data);
+  const res = await apiCall("addFeeding", data);
   if (res?.success) { toast("Feeding logged!", "success"); closeModal("feeding-modal"); loadFeeding(); }
 }
 
 // ===================== PRODUCTION =====================
 async function loadProduction() {
   document.getElementById("production-body").innerHTML = loadingRow(7);
-  const data = await apiCall("production");
+  const data = await apiCall("getProd");
   if (!data) return;
   const list = Array.isArray(data) ? data : [];
   const tbody = document.getElementById("production-body");
@@ -1362,14 +1359,14 @@ async function saveProduction() {
     Quality: document.getElementById("p-quality").value,
     Notes: document.getElementById("p-notes").value,
   };
-  const res = await apiCall("production", "POST", data);
+  const res = await apiCall("addProd", data);
   if (res?.success) { toast("Production logged!", "success"); closeModal("production-modal"); loadProduction(); }
 }
 
 // ===================== BREEDING =====================
 async function loadBreeding() {
   document.getElementById("breeding-body").innerHTML = loadingRow(7);
-  const data = await apiCall("breeding");
+  const data = await apiCall("getBreeding");
   if (!data) return;
   const list = Array.isArray(data) ? data : [];
   const tbody = document.getElementById("breeding-body");
@@ -1406,14 +1403,14 @@ async function saveBreeding() {
     Status: document.getElementById("br-status").value,
     Notes: document.getElementById("br-notes").value,
   };
-  const res = await apiCall("breeding", "POST", data);
+  const res = await apiCall("addBreeding", data);
   if (res?.success) { toast("Breeding record saved!", "success"); closeModal("breeding-modal"); loadBreeding(); }
 }
 
 // ===================== FINANCE =====================
 async function loadFinance() {
   document.getElementById("finance-body").innerHTML = loadingRow(5);
-  const data = await apiCall("finance");
+  const data = await apiCall("getFinance");
   if (!data) return;
   const list = Array.isArray(data) ? data : [];
 
@@ -1459,7 +1456,7 @@ async function saveFinance() {
     Description: document.getElementById("fi-desc").value,
   };
   if (!data.Amount) return toast("Amount is required", "error");
-  const res = await apiCall("finance", "POST", data);
+  const res = await apiCall("addFinance", data);
   if (res?.success) { toast("Finance entry saved!", "success"); closeModal("finance-modal"); loadFinance(); }
 }
 
@@ -1468,7 +1465,7 @@ function populateCattleSelects(selectId) {
   const sel = document.getElementById(selectId);
   if (!cattleCache.length) {
     // Load and populate
-    apiCall("cattle").then(data => {
+    apiCall("getCattle").then(data => {
       if (!data) return;
       cattleCache = Array.isArray(data) ? data : [];
       populateSelect(sel, cattleCache);
